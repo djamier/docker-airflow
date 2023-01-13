@@ -54,8 +54,8 @@ with DAG(
 
     upload_file = SFTPOperator(
         task_id="put-file",
-        ssh_conn_id="ssh-conn", #nama bucket
-        remote_filepath=f"namafolder/test.csv", #folder dalam bucket
+        ssh_conn_id="ssh-conn", #connection sftp
+        remote_filepath=f"namafolder/test.csv", #folder dalam sftp
         local_filepath=f"dags/test.csv", #folder dari local airflow
         operation="put"
     )
