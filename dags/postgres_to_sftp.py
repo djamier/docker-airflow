@@ -34,7 +34,7 @@ def ingest_from_postgres():
         f.flush()
         cursor.close()
         conn.close()
-        logging.info("Saved file: %s", f"dags/test.csv")
+        logging.info("Saved file: %s", f"dags/test_{now2}.csv")
 
 
 with DAG(
@@ -44,7 +44,7 @@ with DAG(
     catchup=False
 ) as dag:
 
-    task1 = PythonOperator(
+    ingest_data = PythonOperator(
         task_id="ingest_from_postgres",
         python_callable= ingest_from_postgres
     )
@@ -52,9 +52,9 @@ with DAG(
     upload_file = SFTPOperator(
         task_id="put-file",
         ssh_conn_id="ssh-conn", #nama bucket
-        remote_filepath=f"namafolder/test.csv", #folder dalam bucket
-        local_filepath=f"dags/test.csv", #folder dari local airflow
+        remote_filepath=f"namafolder/test_{now2}.csv", #folder dalam bucket
+        local_filepath=f"dags/test_{now2}.csv", #folder dari local airflow
         operation="put"
     )
     
-    task1 >> upload_file
+    ingest_data >> upload_file
