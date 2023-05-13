@@ -16,7 +16,7 @@ default_args = {
     'retries': 1,
     'retry_delay': timedelta(minutes=5),
 }
-
+gc = pygsheets.authorize(service_account_file='./data/file.json')
 now = datetime.now(pendulum.timezone('Asia/Jakarta'))
 now2 = now.strftime('%Y%m%d')
 
