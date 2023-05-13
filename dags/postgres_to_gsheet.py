@@ -1,51 +1,39 @@
 import pendulum
 import pygsheets
-import pandas
+import pandas as pd
+from sqlalchemy import create_engine
 from datetime import datetime, timedelta
-from tempfile import NamedTemporaryFile
 from airflow import DAG
 from airflow.operators.python import PythonOperator
-from airflow.providers.postgres.hooks.postgres import PostgresHook
+#from airflow.providers.postgres.hooks.postgres import PostgresHook
 
 # Credentials google sheet
 gc = pygsheets.authorize(service_account_file='./data/file.json')
-sh = gc.open_by_url('your_googlesheet_URL/')
+sh = gc.open_by_url('your_url/')
 
 default_args = {
     'owner': 'djamier',
     'depends_on_past': False,
     'start_date': pendulum.datetime(2023, 1, 1, tz="Asia/Jakarta"),
-    'retries': 1,
-    'retry_delay': timedelta(minutes=5),
+    'retries': 0,
+    #'retry_delay': timedelta(minutes=10),
 }
 
-def ingest_from_postgres():
-    hook = PostgresHook(postgres_conn_id="postgres_conn")
-    conn = hook.get_conn()
-    cursor = conn.cursor()
-    cursor.execute( """
-                    select id, name, job_role from employees 
-                    """
-                  )
-
-    df = pandas.DataFrame(cursor.fetchall(), columns=["id", "name", "job_role"])
-    conn.close()
+def get_data_from_postgres():
+    engine = create_engine('postgresql+psycopg2://airflow:airflow@postgres/airflow')
+    df = pd.read_sql_query('select id, name, job_role from public.employees', con=engine)
+    engine.dispose()
     return df
 
 def get_last_row_from_gsheet():
     wks = sh[1]
     df_from_gsheet = wks.get_as_df()
-    start_row = df_from_gsheet.index[-1]
-    return start_row
+    return df_from_gsheet.index[-1] + 3
 
 def insert_data_into_gsheet(df, start_row):
     wks = sh[1]
-    wks.set_dataframe(df, start='A{}'.format(start_row), copy_head=False)
+    return wks.set_dataframe(df, start='A{}'.format(start_row), copy_head=False)
 
-def main():
-    df = ingest_from_postgres()
-    start_row = get_last_row_from_gsheet()
-    insert_data_into_gsheet(df, start_row)
 
 with DAG(
     dag_id="postgres_to_gsheet",
@@ -54,9 +42,23 @@ with DAG(
     catchup=False
 ) as dag:
 
-    ingest_data = PythonOperator(
-        task_id="ingest_from_postgres",
-        python_callable= ingest_from_postgres
+    task_get_data = PythonOperator(
+        task_id="get_data_from_postgres",
+        python_callable= get_data_from_postgres
     )
 
-    ingest_data
+    task_get_last_row = PythonOperator(
+        task_id="get_last_row_from_gsheet",
+        python_callable=get_last_row_from_gsheet
+    )
+
+    task_insert_data = PythonOperator(
+        task_id="insert_data_into_gsheet",
+        python_callable=insert_data_into_gsheet,
+        op_kwargs={
+            'df': task_get_data.output,
+            'start_row': task_get_last_row.output
+        }
+    )
+
+    task_get_data >> task_get_last_row >> task_insert_data
