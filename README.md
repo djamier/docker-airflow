@@ -3,7 +3,7 @@
 To start working with docker-airflow you can invoke this command:
 
 ```bash
-source project.sh
+source config.sh
 ```
 
 This command will do the following things:
@@ -15,20 +15,27 @@ This command will do the following things:
 
 # Start to install airflow
 
-To start pull docker you can invoke this command:
+To start docker-airflow you can invoke this command:
 
 ```zsh
 docker-compose up -d
 ```
 
+After running the command above, your directory will be created like this:
+
+.
+├── dags
+├── logs/
+│   ├── dag_processor_manager
+│   └── scheduler
+├── plugins
+└── data
+
 # Stop working
 
-To stop working with the docker-airflow , you can deactivate the virtual environment:
+To stop working with docker-airflow , you can deactivate the virtual environment:
 
 ```zsh
 docker-compose down
-```
-
-```zsh
 deactivate
 ```
