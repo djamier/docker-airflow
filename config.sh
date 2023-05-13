@@ -10,6 +10,3 @@ source venv/bin/activate
 
 echo 'update latest pip'
 pip install --upgrade pip
-
-echo 'installing pip packages'
-pip install -r requirements.txt
