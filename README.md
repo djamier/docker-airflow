@@ -30,7 +30,7 @@ docker-compose up -d
 ```
 This command will start Airflow and its dependencies in separate Docker containers, and the -d flag runs the containers in detached mode, allowing you to continue using your terminal. After running the command, the directory structure of your project will be created as shown:
 
-.
+
 ├── dags
 ├── logs/
 │   ├── dag_processor_manager
