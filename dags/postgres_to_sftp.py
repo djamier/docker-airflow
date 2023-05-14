@@ -1,13 +1,15 @@
 import csv
 import logging
 import pendulum
-import pygsheets
 from datetime import datetime, timedelta
 from tempfile import NamedTemporaryFile
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from airflow.providers.sftp.operators.sftp import SFTPOperator
+
+now = datetime.now(pendulum.timezone('Asia/Jakarta'))
+current_date = now.strftime('%Y%m%d')
 
 default_args = {
     'owner': 'djamier',
@@ -16,9 +18,6 @@ default_args = {
     'retries': 1,
     'retry_delay': timedelta(minutes=5),
 }
-gc = pygsheets.authorize(service_account_file='./data/file.json')
-now = datetime.now(pendulum.timezone('Asia/Jakarta'))
-now2 = now.strftime('%Y%m%d')
 
 def ingest_from_postgres():
     #getdata dari postgres dan convert ke format csv
@@ -35,7 +34,7 @@ def ingest_from_postgres():
         f.flush()
         cursor.close()
         conn.close()
-        logging.info("Saved file: %s", f"dags/test_{now2}.csv")
+        logging.info("Saved file: %s", f"dags/test_{current_date}.csv")
 
 
 with DAG(
@@ -45,17 +44,17 @@ with DAG(
     catchup=False
 ) as dag:
 
-    ingest_data = PythonOperator(
+    task_ingest_data = PythonOperator(
         task_id="ingest_from_postgres",
         python_callable= ingest_from_postgres
     )
 
-    upload_file = SFTPOperator(
+    task_upload_file = SFTPOperator(
         task_id="put-file",
         ssh_conn_id="ssh-conn", #nama bucket
-        remote_filepath=f"namafolder/test_{now2}.csv", #folder dalam bucket
-        local_filepath=f"dags/test_{now2}.csv", #folder dari local airflow
+        remote_filepath=f"namafolder/test_{current_date}.csv", #folder dalam bucket
+        local_filepath=f"dags/test_{current_date}.csv", #folder dari local airflow
         operation="put"
     )
     
-    ingest_data >> upload_file
+    task_ingest_data >> task_upload_file
