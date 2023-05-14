@@ -8,20 +8,27 @@ source config.sh
 
 This command will do the following things:
 
-- Create `venv` directory if not exist.
-- Activate virtual environment.
+- Create `venv` directory if not exist
+- Activate virtual environment
+- Update to latest pip
+
+
+# Docker-Airflow Setup
+
+To start Docker-Airflow, you can run the following commands:
+
+
+```zsh
+docker build -t image_airflow .
+```
+This command will do the following things:
+- Build an airflow image
 - Install all pip packages defined in `requirements.txt`
-
-
-# Start to install airflow
-
-To start docker-airflow you can invoke this command:
 
 ```zsh
 docker-compose up -d
 ```
-
-After running the command above, your directory will be created like this:
+This command will start Airflow and its dependencies in separate Docker containers, and the -d flag runs the containers in detached mode, allowing you to continue using your terminal. After running the command, the directory structure of your project will be created as shown:
 
 .
 ├── dags
