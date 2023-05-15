@@ -8,7 +8,7 @@ from airflow.operators.python import PythonOperator
 #from airflow.providers.postgres.hooks.postgres import PostgresHook
 
 # Credentials google sheet
-gc = pygsheets.authorize(service_account_file='./data/file.json')
+gc = pygsheets.authorize(service_account_file='./resources/file.json')
 sh = gc.open_by_url('your_url/')
 
 default_args = {
