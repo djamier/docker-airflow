@@ -1,6 +1,6 @@
 # Starting to work
 
-To start working with Docker-Airflow you can invoke this command:
+To start working with Docker-Airflow you can run the following command:
 
 ```bash
 source config.sh
@@ -18,7 +18,7 @@ This command will do the following things:
 To start Docker-Airflow, you can run the following commands:
 
 ```zsh
-docker build -t image_airflow .
+docker build -t airflow_image .
 ```
 This command will do the following things:
 - Build an airflow image.
