@@ -1,4 +1,4 @@
-FROM apache/airflow:2.6.0
+FROM apache/airflow:2.6.1
 WORKDIR /code
 COPY requirements.txt /code/
 RUN pip install -r requirements.txt
