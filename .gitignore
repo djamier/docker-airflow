@@ -2,5 +2,4 @@ venv
 .env
 logs
 plugins
-data
 dags/__pycache__
