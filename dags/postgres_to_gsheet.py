@@ -19,18 +19,18 @@ default_args = {
     #'retry_delay': timedelta(minutes=10),
 }
 
-def get_data_from_postgres():
+def get_data_from_postgres() ->str:
     engine = create_engine('postgresql+psycopg2://airflow:airflow@postgres/airflow')
     df = pd.read_sql_query('select id, name, job_role from public.employees', con=engine)
     engine.dispose()
     return df
 
-def get_last_row_from_gsheet():
+def get_last_row_from_gsheet() ->str:
     wks = sh[1]
     df_from_gsheet = wks.get_as_df()
     return df_from_gsheet.index[-1] + 3
 
-def insert_data_into_gsheet(df, start_row):
+def insert_data_into_gsheet(df, start_row :str) ->str:
     wks = sh[1]
     return wks.set_dataframe(df, start='A{}'.format(start_row), copy_head=False)
 
