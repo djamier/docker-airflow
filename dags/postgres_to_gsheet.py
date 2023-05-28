@@ -19,11 +19,14 @@ default_args = {
     #'retry_delay': timedelta(minutes=10),
 }
 
-def get_data_from_postgres() ->str:
-    engine = create_engine('postgresql+psycopg2://airflow:airflow@postgres/airflow')
-    df = pd.read_sql_query('select id, name, job_role from public.employees', con=engine)
-    engine.dispose()
-    return df
+def get_data_from_postgres() -> str:
+    conn = create_engine('postgresql+psycopg2://airflow:airflow@postgres/airflow')
+    try:
+        df = pd.read_sql('select id, name, job_role from public.employees', conn)
+        return df
+    finally:
+        conn.dispose()
+
 
 def get_last_row_from_gsheet() ->str:
     wks = sh[1]
