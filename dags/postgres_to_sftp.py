@@ -19,7 +19,7 @@ default_args = {
     'retry_delay': timedelta(minutes=5),
 }
 
-def ingest_from_postgres():
+def ingest_from_postgres()-> str:
     #getdata dari postgres dan convert ke format csv
     hook = PostgresHook(postgres_conn_id="postgres_conn")
     conn = hook.get_conn()
