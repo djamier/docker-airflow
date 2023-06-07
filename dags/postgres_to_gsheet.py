@@ -19,6 +19,11 @@ default_args = {
     #'retry_delay': timedelta(minutes=10),
 }
 
+def read_query_file():
+    with open('./resources/query.sql', 'r') as file:
+        query = file.read()
+    return query
+
 def get_data_from_postgres() -> str:
     conn = create_engine('postgresql+psycopg2://airflow:airflow@postgres/airflow')
     try:
