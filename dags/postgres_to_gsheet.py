@@ -24,10 +24,10 @@ def read_query_file():
         query = file.read()
     return query
 
-def get_data_from_postgres() -> str:
+def get_data_from_postgres(query) -> str:
     conn = create_engine('postgresql+psycopg2://airflow:airflow@postgres/airflow')
     try:
-        df = pd.read_sql('select id, name, job_role from public.employees', conn)
+        df = pd.read_sql(query, conn)
         return df
     finally:
         conn.dispose()
@@ -49,10 +49,18 @@ with DAG(
     schedule_interval='0 0 * * *',
     catchup=False
 ) as dag:
+    
+    task_read_query_file = PythonOperator(
+        task_id="read_query_file",
+        python_callable=read_query_file
+    )
 
     task_get_data = PythonOperator(
         task_id="get_data_from_postgres",
-        python_callable= get_data_from_postgres
+        python_callable= get_data_from_postgres,
+        op_kwagrs={
+            'query':task_read_query_file.output
+        }
     )
 
     task_get_last_row = PythonOperator(
