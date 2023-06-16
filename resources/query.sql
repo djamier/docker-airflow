@@ -1,5 +1,5 @@
 select
     id
     , name
-    , job_role
+    , position
 from public.employees
