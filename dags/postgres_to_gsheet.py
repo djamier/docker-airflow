@@ -1,44 +1,83 @@
 import pendulum
 import pygsheets
 import pandas as pd
-from sqlalchemy import create_engine
-from datetime import datetime, timedelta
+import psycopg2
+from datetime import timedelta
 from airflow import DAG
 from airflow.operators.python import PythonOperator
- 
-gc = pygsheets.authorize(service_account_file='./resources/file.json')
-sh = gc.open_by_url('your_url/')
+#from airflow.providers.postgres.hooks.postgres import PostgresHook
 
-def get_connection():
-    conn = create_engine('postgresql+psycopg2://djamier:djamier@localhost:5435/postgres')
-    return conn
+# Credentials google sheet
+# gc = pygsheets.authorize(service_account_file='/opt/airflow/resources/file.json')
+# sh = gc.open_by_url('your_url/')
+
+default_args = {
+    'owner': 'djamier',
+    'depends_on_past': False,
+    'start_date': pendulum.datetime(2023, 1, 1, tz="Asia/Jakarta"),
+    'retries': 0,
+    'retry_delay': timedelta(minutes=10),
+}
 
 def read_query_file():
-    with open('./resources/query.sql', 'r') as file:
+    with open('/opt/airflow/resources/query.sql', 'r') as file:
         query = file.read()
+        print (query)
     return query
 
-def execute_query(query, conn):
-    df = pd.read_sql(query, conn)
+def get_data_from_postgres(query):
+    conn = psycopg2.connect(
+        user='airflow',
+        password='airflow',
+        host='postgres',
+        port=5432,
+        database='airflow'
+    )
+    df = pd.read_sql_query(query, conn)
+    print (df)
     return df
 
-def get_last_row_from_gsheet(sheet_name):
-    wks = gc.open_by_url(sh).worksheet_by_title(sheet_name)
-    df_from_gsheet = wks.get_as_df()
-    return df_from_gsheet.index[-1] + 3
+# def get_last_row_from_gsheet():
+#     wks = sh[1]
+#     df_from_gsheet = wks.get_as_df()
+#     return df_from_gsheet.index[-1] + 3
 
-def insert_data_into_gsheet(df, sheet_name, start_row):
-    wks = gc.open_by_url(sh).worksheet_by_title(sheet_name)
-    return wks.set_dataframe(df, start='A{}'.format(start_row), copy_head=False)
+# def insert_data_into_gsheet(df, start_row):
+#     wks = sh[1]
+#     return wks.set_dataframe(df, start='A{}'.format(start_row), copy_head=False)
 
-def main():
-    conn = get_connection()
-    query = read_query_file()
-    start_row = get_last_row_from_gsheet(sh)
-    df = execute_query(query, conn)
-    print(df)
-    insert_data_into_gsheet(df, sh, start_row)
+with DAG(
+    dag_id="postgres_to_gsheet",
+    default_args=default_args,
+    schedule_interval='0 0 * * *',
+    catchup=False
+) as dag:
 
+    task_read_query_file = PythonOperator(
+        task_id="read_query_file",
+        python_callable=read_query_file
+    )
 
-if __name__ == '__main__':
-    main()
+    task_get_data = PythonOperator(
+        task_id="get_data_from_postgres",
+        python_callable= get_data_from_postgres,
+        op_kwargs={
+            'query': task_read_query_file.output
+        }
+    )
+
+    # task_get_last_row = PythonOperator(
+    #     task_id="get_last_row_from_gsheet",
+    #     python_callable=get_last_row_from_gsheet
+    # )
+
+    # task_insert_data = PythonOperator(
+    #     task_id="insert_data_into_gsheet",
+    #     python_callable=insert_data_into_gsheet,
+    #     op_kwargs={
+    #         'df': task_get_data.output,
+    #         'start_row': task_get_last_row.output
+    #     }
+    # )
+
+    task_read_query_file >> task_get_data #>> task_get_last_row >> task_insert_data
