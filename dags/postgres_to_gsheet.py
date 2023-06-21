@@ -8,8 +8,8 @@ from airflow.operators.python import PythonOperator
 #from airflow.providers.postgres.hooks.postgres import PostgresHook
 
 # Credentials google sheet
-# gc = pygsheets.authorize(service_account_file='/opt/airflow/resources/file.json')
-# sh = gc.open_by_url('your_url/')
+gc = pygsheets.authorize(service_account_file='/opt/airflow/resources/file.json')
+sh = gc.open_by_url('your_url/')
 
 default_args = {
     'owner': 'djamier',
@@ -35,21 +35,17 @@ def read_query_file():
         print (query)
     return query
 
+def get_last_row_from_gsheet():
+    wks = sh[0]
+    df_from_gsheet = wks.get_as_df()
+    return df_from_gsheet.index[-1] + 3
+
 def create_dataframe (query):
     conn = get_postgres_connection()
     df = pd.read_sql_query(query, conn)
     print (df)
     conn.close()
     return df
-
-# def get_last_row_from_gsheet():
-#     wks = sh[0]
-#     df_from_gsheet = wks.get_as_df()
-#     return df_from_gsheet.index[-1] + 3
-
-# def insert_data_into_gsheet(df, start_row):
-#     wks = sh[1]
-#     return wks.set_dataframe(df, start='A{}'.format(start_row), copy_head=False)
 
 with DAG(
     dag_id='postgres_to_gsheet',
@@ -63,6 +59,11 @@ with DAG(
         python_callable=read_query_file
     )
 
+    task_get_last_row = PythonOperator(
+        task_id="get_last_row_from_gsheet",
+        python_callable=get_last_row_from_gsheet
+    )
+
     task_create_dataframe = PythonOperator(
         task_id='create_dataframe',
         python_callable= create_dataframe,
@@ -71,18 +72,4 @@ with DAG(
         }
     )
 
-    # task_get_last_row = PythonOperator(
-    #     task_id="get_last_row_from_gsheet",
-    #     python_callable=get_last_row_from_gsheet
-    # )
-
-    # task_insert_data = PythonOperator(
-    #     task_id="insert_data_into_gsheet",
-    #     python_callable=insert_data_into_gsheet,
-    #     op_kwargs={
-    #         'df': task_get_data.output,
-    #         'start_row': task_get_last_row.output
-    #     }
-    # )
-
-    task_read_query_file >> task_create_dataframe #>> task_get_last_row #>> task_insert_data
+    task_read_query_file >> task_get_last_row >> task_create_dataframe
