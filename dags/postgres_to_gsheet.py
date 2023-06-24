@@ -47,6 +47,10 @@ def create_dataframe (query):
     conn.close()
     return df
 
+def insert_data_into_gsheet(df, start_row):
+    wks = sh[0]
+    return wks.set_dataframe(df, start='A{}'.format(start_row), copy_head=False)
+
 with DAG(
     dag_id='postgres_to_gsheet',
     default_args=default_args,
@@ -72,4 +76,13 @@ with DAG(
         }
     )
 
-    task_read_query_file >> task_get_last_row >> task_create_dataframe
+    task_insert_data = PythonOperator(
+        task_id="insert_data_into_gsheet",
+        python_callable=insert_data_into_gsheet,
+        op_kwargs={
+            'df': task_create_dataframe.output,
+            'start_row': task_get_last_row.output
+        }
+    )
+
+    task_read_query_file >> task_get_last_row >> task_create_dataframe >> task_insert_data
