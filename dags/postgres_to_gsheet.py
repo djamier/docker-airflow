@@ -19,7 +19,7 @@ default_args = {
     'retry_delay': timedelta(minutes=10),
 }
 
-def get_postgres_connection():
+def get_postgres_connection() ->str:
     conn = psycopg2.connect(
         user='airflow',
         password='airflow',
@@ -29,25 +29,25 @@ def get_postgres_connection():
     )
     return conn
 
-def read_query_file():
+def read_query_file() ->str:
     with open('/opt/airflow/resources/query.sql', 'r') as file:
         query = file.read()
         print (query)
     return query
 
-def get_last_row_from_gsheet():
+def get_last_row_from_gsheet() ->str:
     wks = sh[0]
     df_from_gsheet = wks.get_as_df()
     return df_from_gsheet.index[-1] + 3
 
-def create_dataframe (query):
+def create_dataframe (query :str) ->str:
     conn = get_postgres_connection()
     df = pd.read_sql_query(query, conn)
     print (df)
     conn.close()
     return df
 
-def insert_data_into_gsheet(df, start_row):
+def insert_data_into_gsheet(df, start_row :str) ->str:
     wks = sh[0]
     return wks.set_dataframe(df, start='A{}'.format(start_row), copy_head=False)
 
