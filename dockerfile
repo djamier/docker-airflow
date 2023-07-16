@@ -12,7 +12,7 @@ RUN apt-get update && \
 
 USER airflow
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install -r requirements.txt
 
 WORKDIR /opt/airflow
 COPY . .
