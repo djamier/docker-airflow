@@ -1,9 +1,10 @@
 pendulum==2.1.2
 openpyxl==3.1.2
 #pandas==2.0.1
+pandas==1.5.3
 pygsheets==2.0.6
 polars==0.17.13
 psycopg2-binary==2.9.6
 snowflake-connector-python==3.0.4
-streamlit==1.22.0
-plotly==5.14.1
+mysql-connector-python==8.1.0
+pip==23.0.1
