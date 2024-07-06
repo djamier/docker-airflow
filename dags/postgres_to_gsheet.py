@@ -30,7 +30,7 @@ def get_postgres_connection() ->str:
     return conn
 
 def read_query_file() ->str:
-    with open('/opt/airflow/resources/query.sql', 'r') as file:
+    with open('/opt/airflow/sql/employees.sql', 'r') as file:
         query = file.read()
         print (query)
     return query
