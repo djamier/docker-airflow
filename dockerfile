@@ -1,4 +1,4 @@
-FROM apache/airflow:2.6.1-python3.9
+FROM apache/airflow:2.7.1-python3.9
 
 USER root
 
@@ -11,13 +11,12 @@ RUN apt-get update && \
     && apt-get clean
 
 USER airflow
-COPY requirements.txt .
-RUN pip install -r requirements.txt
+ENV PYTHONPATH=.
+COPY --chown=airflow:root ./dags /opt/airflow/dags
+COPY --chown=airflow:root ./logs /opt/airflow/logs
+COPY --chown=airflow:root ./plugins /opt/airflow/plugins
+COPY --chown=airflow:root ./resources /opt/airflow/resources
+COPY --chown=airflow:root ./sql /opt/airflow/sql
+COPY --chown=airflow:root ./requirements.txt /opt/airflow/requirements.txt
 
-WORKDIR /opt/airflow
-COPY . .
-
-ENV AIRFLOW_HOME=/opt/airflow
-
-CMD ["airflow", "webserver", "--port", "8080", "--daemon"]
-CMD ["airflow", "scheduler"]
+RUN pip install -r /opt/airflow/requirements.txt
