@@ -33,8 +33,6 @@ This command will do the following things:
 - Install all pip packages defined in `requirements.txt`.
 
 
-
-
 ```bash
 docker-compose up -d
 ```
